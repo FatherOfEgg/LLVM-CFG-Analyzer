@@ -1,4 +1,5 @@
 #include <llvm-10/llvm/IR/BasicBlock.h>
+#include <llvm-10/llvm/IR/InstrTypes.h>
 #include <llvm-10/llvm/IR/Instruction.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
@@ -42,7 +43,13 @@ int main(int argc, char **argv) {
 
     for (BasicBlock &bb : *mainFunc) {
         for (Instruction &i : bb) {
-            std::cout << "Instr: " << i.getOpcodeName() << std::endl;
+            if (auto *call = dyn_cast<CallBase>(&i)) {
+                if (Function *calledFunc = call->getCalledFunction()) {
+                    std::cout << "Call to: " << calledFunc->getName().str() << std::endl;
+                } else {
+                    std::cout << "Indirect call through a function pointer." << std::endl;
+                }
+            }
         }
     }
 
