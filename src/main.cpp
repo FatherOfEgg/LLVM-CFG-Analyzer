@@ -1,3 +1,5 @@
+#include <llvm-10/llvm/IR/BasicBlock.h>
+#include <llvm-10/llvm/IR/Instruction.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
@@ -18,20 +20,30 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    LLVMContext Context;
-    SMDiagnostic Err;
+    LLVMContext context;
+    SMDiagnostic err;
 
-    std::unique_ptr<Module> Mod = parseIRFile(argv[1], Err, Context);
-    if (!Mod) {
-        Err.print(argv[0], errs());
+    std::unique_ptr<Module> mod = parseIRFile(argv[1], err, context);
+    if (!mod) {
+        err.print(argv[0], errs());
         return 1;
     }
 
-    for (Function &F : *Mod) {
-        if (F.isDeclaration()) {
-            continue;
+    Function *mainFunc = mod->getFunction("main");
+    if (!mainFunc) {
+        std::cout << "Error: 'main' function not found in the IR file." << std::endl;
+        return 1;
+    }
+
+    if (mainFunc->isDeclaration()) {
+        std::cout << "Error: 'main' function is a declaration, not a definition." << std::endl;
+        return 1;
+    }
+
+    for (BasicBlock &bb : *mainFunc) {
+        for (Instruction &i : bb) {
+            std::cout << "Instr: " << i.getOpcodeName() << std::endl;
         }
-        std::cout << "Function: " << F.getName().str() << std::endl;
     }
 
     return 0;
