@@ -28,6 +28,9 @@ int main(int argc, char **argv) {
     }
 
     for (Function &F : *Mod) {
+        if (F.isDeclaration()) {
+            continue;
+        }
         std::cout << "Function: " << F.getName().str() << std::endl;
     }
 
