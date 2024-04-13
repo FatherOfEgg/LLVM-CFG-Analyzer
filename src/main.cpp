@@ -13,24 +13,22 @@
 #include <iostream>
 #include <memory>
 
-using namespace llvm;
-
 int main(int argc, char **argv) {
     if (argc < 2) {
         std::cout << "Usage: " << argv[0] << " <LLVM IR file>" << std::endl;
         return 1;
     }
 
-    LLVMContext context;
-    SMDiagnostic err;
+    llvm::LLVMContext context;
+    llvm::SMDiagnostic err;
 
-    std::unique_ptr<Module> mod = parseIRFile(argv[1], err, context);
+    std::unique_ptr<llvm::Module> mod = parseIRFile(argv[1], err, context);
     if (!mod) {
-        err.print(argv[0], errs());
+        err.print(argv[0], llvm::errs());
         return 1;
     }
 
-    Function *mainFunc = mod->getFunction("main");
+    llvm::Function *mainFunc = mod->getFunction("main");
     if (!mainFunc) {
         std::cout << "Error: 'main' function not found in the IR file." << std::endl;
         return 1;
@@ -41,10 +39,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    for (BasicBlock &bb : *mainFunc) {
-        for (Instruction &i : bb) {
-            if (auto *call = dyn_cast<CallBase>(&i)) {
-                if (Function *calledFunc = call->getCalledFunction()) {
+    for (llvm::BasicBlock &bb : *mainFunc) {
+        for (llvm::Instruction &i : bb) {
+            if (auto *call = llvm::dyn_cast<llvm::CallBase>(&i)) {
+                if (llvm::Function *calledFunc = call->getCalledFunction()) {
                     std::cout << "Call to: " << calledFunc->getName().str() << std::endl;
                 } else {
                     std::cout << "Indirect call through a function pointer." << std::endl;
