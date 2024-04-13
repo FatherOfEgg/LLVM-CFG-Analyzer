@@ -1,17 +1,29 @@
-#include <llvm/IR/BasicBlock.h>
-#include <llvm/IR/InstrTypes.h>
-#include <llvm/IR/Instruction.h>
 #include <llvm/IR/Function.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include <llvm/IR/CFG.h>
+#include <llvm/Analysis/CallGraph.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/raw_ostream.h>
 
 #include <iostream>
-#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <set>
+
+int dfs(std::string node, std::unordered_map<std::string, std::vector<std::string>> callGraph, std::set<std::string> &visited) {
+    if (visited.count(node)) {
+        return 0;
+    }
+    
+    visited.insert(node);
+    int maxPathLength = 0;
+
+    for (const auto &nextNode : callGraph[node]) {
+        maxPathLength = std::max(maxPathLength, dfs(nextNode, callGraph, visited));
+    }
+
+    visited.erase(node);
+    return maxPathLength + 1;
+}
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -39,17 +51,29 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    for (llvm::BasicBlock &bb : *mainFunc) {
-        for (llvm::Instruction &i : bb) {
-            if (auto *call = llvm::dyn_cast<llvm::CallBase>(&i)) {
-                if (llvm::Function *calledFunc = call->getCalledFunction()) {
-                    std::cout << "Call to: " << calledFunc->getName().str() << std::endl;
-                } else {
-                    std::cout << "Indirect call through a function pointer." << std::endl;
+    llvm::CallGraph cg(*mod);
+    std::unordered_map<std::string, std::vector<std::string>> callGraph;
+
+    for (const auto &n : cg) {
+        llvm::Function *f = n.second->getFunction();
+        if (f && !f->isDeclaration()) {
+            std::string caller = f->getName().str();
+
+            for (const auto &callees : *n.second) {
+                llvm::Function *callee = callees.second->getFunction();
+
+                if (callee && !callee->isDeclaration()) {
+                    std::string calleeName = callee->getName().str();
+                    callGraph[caller].push_back(calleeName);
                 }
             }
         }
     }
+
+    std::set<std::string> visited;
+    int longestPath = dfs("main", callGraph, visited) - 1;
+
+    std::cout << "Longest execution path length in main: " << longestPath << std::endl;
 
     return 0;
 }
