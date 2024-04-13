@@ -1,6 +1,6 @@
-#include <llvm-10/llvm/IR/BasicBlock.h>
-#include <llvm-10/llvm/IR/InstrTypes.h>
-#include <llvm-10/llvm/IR/Instruction.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instruction.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
