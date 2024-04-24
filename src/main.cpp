@@ -1,29 +1,81 @@
 #include <llvm/IR/Function.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/Analysis/CFG.h>
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include <llvm/Analysis/CallGraph.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Passes/PassBuilder.h>
 
 #include <iostream>
 #include <vector>
-#include <unordered_map>
-#include <set>
+#include <map>
 
-int dfs(std::string node, std::unordered_map<std::string, std::vector<std::string>> callGraph, std::set<std::string> &visited) {
-    if (visited.count(node)) {
-        return 0;
+struct LongestPathPass : public llvm::PassInfoMixin<LongestPathPass> {
+    llvm::PreservedAnalyses run(llvm::Module &mod, llvm::ModuleAnalysisManager &) {
+        llvm::Function *mainFunc = mod.getFunction("main");
+        if (mainFunc) {
+            std::map<const llvm::BasicBlock*, int> longestPaths;
+            // Initialize all basic blocks with minimal path length
+            for (const llvm::BasicBlock &BB : *mainFunc) {
+                longestPaths[&BB] = 0;
+            }
+
+            // Simple topological sort based longest path finding in a DAG
+            std::vector<const llvm::BasicBlock*> topoSortedBlocks;
+            topologicalSort(*mainFunc, topoSortedBlocks);
+
+            for (const llvm::BasicBlock *BB : topoSortedBlocks) {
+                int maxLength = 0;
+                for (const auto *Pred : predecessors(BB)) {
+                    maxLength = std::max(maxLength, longestPaths[Pred] + 1);
+                }
+                longestPaths[BB] = maxLength;
+            }
+
+            // Find the maximum path length in the function
+            int maxPath = 0;
+            for (auto &entry : longestPaths) {
+                maxPath = std::max(maxPath, entry.second);
+            }
+
+            std::cout << "Longest path in main has length " << maxPath << std::endl;
+        }
+
+        return llvm::PreservedAnalyses::all();
     }
-    
-    visited.insert(node);
-    int maxPathLength = 0;
 
-    for (const auto &nextNode : callGraph[node]) {
-        maxPathLength = std::max(maxPathLength, dfs(nextNode, callGraph, visited));
+    void topologicalSort(const llvm::Function &F, std::vector<const llvm::BasicBlock*> &result) {
+        std::map<const llvm::BasicBlock*, int> inDegree;
+        for (const llvm::BasicBlock &BB : F) {
+            for (const auto *Succ : successors(&BB)) {
+                inDegree[Succ]++;
+            }
+        }
+
+        std::vector<const llvm::BasicBlock*> queue;
+        for (const llvm::BasicBlock &BB : F) {
+            if (inDegree[&BB] == 0) {
+                queue.push_back(&BB);
+            }
+        }
+
+        while (!queue.empty()) {
+            const llvm::BasicBlock *BB = queue.back();
+            queue.pop_back();
+            result.push_back(BB);
+            for (const llvm::BasicBlock *Succ : successors(BB)) {
+                if (--inDegree[Succ] == 0) {
+                    queue.push_back(Succ);
+                }
+            }
+        }
     }
-
-    visited.erase(node);
-    return maxPathLength + 1;
-}
+};
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -51,29 +103,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    llvm::CallGraph cg(*mod);
-    std::unordered_map<std::string, std::vector<std::string>> callGraph;
+    llvm::PassBuilder pb;
+    llvm::ModuleAnalysisManager mam;
+    pb.registerModuleAnalyses(mam);
 
-    for (const auto &n : cg) {
-        llvm::Function *f = n.second->getFunction();
-        if (f && !f->isDeclaration()) {
-            std::string caller = f->getName().str();
+    llvm::ModulePassManager passManager;
+    passManager.addPass(LongestPathPass());
 
-            for (const auto &callees : *n.second) {
-                llvm::Function *callee = callees.second->getFunction();
-
-                if (callee && !callee->isDeclaration()) {
-                    std::string calleeName = callee->getName().str();
-                    callGraph[caller].push_back(calleeName);
-                }
-            }
-        }
-    }
-
-    std::set<std::string> visited;
-    int longestPath = dfs("main", callGraph, visited) - 1;
-
-    std::cout << "Longest execution path length in main: " << longestPath << std::endl;
+    passManager.run(*mod, mam);
 
     return 0;
 }
