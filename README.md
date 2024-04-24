@@ -3,6 +3,11 @@ This is an Honors project for my CSE 3150 class. It is a very simple and potenti
 Features
 --------
 
+- Finding the longest function call chain
+
+Planned Features
+--------
+
 - Finding the longest execution path
 
 Building
