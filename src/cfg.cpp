@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "execPath.hpp"
+#include "callChain.hpp"
 
 void CFG::Open(char *IRFile) {
     if (!mod) {
@@ -38,5 +39,6 @@ void CFG::FindLongestExecutionPath() {
 }
 
 void CFG::FindLongestFunctionCallChain() {
-
+    CallChain cc(&*mod);
+    cc.FindLongestCallChain();
 }
