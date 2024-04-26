@@ -4,15 +4,14 @@ Features
 --------
 
 - Finding the longest function call chain
-
-Planned Features
---------
-
 - Finding the longest execution path
+
 
 Building
 -------------------
 
-To build, all you need to do is type:
+Make sure you have clang and LLVM installed. Then to build, all you need to do is run:
 
     make
+
+Same thing for the test files.
