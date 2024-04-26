@@ -5,6 +5,7 @@ void a() {
 }
 
 void b() {
+    a();
     std::cout << "b" << std::endl;
 }
 
