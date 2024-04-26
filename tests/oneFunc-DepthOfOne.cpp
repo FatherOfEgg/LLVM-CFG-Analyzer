@@ -1,10 +1,10 @@
 #include <iostream>
 
-void foo() {
+void b() {
     std::cout << "foo" << std::endl;
 }
 
 int main() {
-    foo();
+    b();
     return 0;
 }

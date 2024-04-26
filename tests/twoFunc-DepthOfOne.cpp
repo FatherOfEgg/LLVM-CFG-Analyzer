@@ -1,15 +1,15 @@
 #include <iostream>
 
-void foo() {
+void b() {
     std::cout << "foo" << std::endl;
 }
 
-void bar() {
+void c() {
     std::cout << "bar" << std::endl;
 }
 
 int main() {
-    foo();
-    bar();
+    b();
+    c();
     return 0;
 }
