@@ -5,6 +5,7 @@
 #include "callChain.hpp"
 
 void CFG::Open(char *IRFile) {
+    mod = parseIRFile(IRFile, err, context);
     if (!mod) {
         err.print(IRFile, llvm::errs());
         exit(1);
