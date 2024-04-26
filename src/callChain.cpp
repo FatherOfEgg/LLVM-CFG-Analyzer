@@ -26,7 +26,7 @@ void CallChain::FindLongestCallChain() {
     std::set<std::string> visited;
     int longestPath = dfs("main", callGraph, visited) - 1;
 
-    std::cout << "Longest execution path length in main: " << longestPath << std::endl;
+    std::cout << "Longest call chain in main: " << longestPath << std::endl;
 }
 
 int CallChain::dfs(std::string node, std::unordered_map<std::string, std::vector<std::string>> callGraph, std::set<std::string> &visited) {
