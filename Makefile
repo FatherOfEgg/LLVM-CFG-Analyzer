@@ -6,7 +6,7 @@ LIBS := $(shell llvm-config --libs)
 BIN_DIR := bin
 
 TARGET := $(BIN_DIR)/cfg
-SRCS := src/main.cpp
+SRCS := src/execPath.cpp src/cfg.cpp src/main.cpp
 
 $(TARGET): $(SRCS) | $(BIN_DIR)
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
